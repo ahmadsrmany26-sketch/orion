@@ -71,17 +71,14 @@ def handle(msg):
 # START EVERYTHING
 # ====================================
 
-print("ORION STARTED")
+import os
 
-threading.Thread(target=run_web).start()
+if __name__ == "__main__":
 
-while True:
+    port = int(os.environ.get("PORT", 10000))
 
-    try:
+    threading.Thread(target=lambda: bot.infinity_polling()).start()
 
-        bot.infinity_polling()
+    app.run(host="0.0.0.0", port=port)
 
-    except:
-
-        time.sleep(5)
 
