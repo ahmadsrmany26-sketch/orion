@@ -1,6 +1,25 @@
 import time
+import threading
+from flask import Flask
 import telebot
 import google.generativeai as genai
+
+# ====================================
+# WEB SERVER (required for Render)
+# ====================================
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Orion is running"
+
+def run_web():
+    app.run(host="0.0.0.0", port=10000)
+
+# ====================================
+# TELEGRAM + GEMINI
+# ====================================
 
 BOT_TOKEN = "8356879608:AAGNoug55rbkBdEbpYNqxvwbRJEjgTUbyYo"
 GOOGLE_API_KEY = "AIzaSyA_6xCgYS9XoY_ItyxfUMfyTpZLBofExVA"
@@ -13,7 +32,7 @@ bot = telebot.TeleBot(BOT_TOKEN)
 
 bot.remove_webhook()
 
-SYSTEM = "أنت أوريون خبير أنيميشن ثلاثي الأبعاد بأسلوب Pixar"
+SYSTEM = "أنت أوريون، خبير أنيميشن ثلاثي الأبعاد بأسلوب Pixar."
 
 def think(user):
 
@@ -25,7 +44,7 @@ def think(user):
 
     except:
 
-        return "خطأ مؤقت"
+        return "صار في خطأ مؤقت"
 
 def send(chat,text):
 
@@ -36,7 +55,7 @@ def send(chat,text):
 @bot.message_handler(commands=['start'])
 def start(msg):
 
-    send(msg.chat.id,"Orion Render Active")
+    send(msg.chat.id,"Orion Render 24/7 Active")
 
 @bot.message_handler(func=lambda m: True)
 def handle(msg):
@@ -45,16 +64,20 @@ def handle(msg):
 
     send(msg.chat.id,reply)
 
-print("STARTING ORION")
+# ====================================
+# START EVERYTHING
+# ====================================
+
+print("ORION STARTED")
+
+threading.Thread(target=run_web).start()
 
 while True:
 
     try:
 
-        bot.infinity_polling(timeout=60,long_polling_timeout=60)
+        bot.infinity_polling()
 
-    except Exception as e:
-
-        print(e)
+    except:
 
         time.sleep(5)
