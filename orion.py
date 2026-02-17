@@ -15,7 +15,10 @@ def home():
     return "Orion is running"
 
 def run_web():
-    app.run(host="0.0.0.0", port=10000)
+    import os
+port = int(os.environ.get("PORT", 10000))
+app.run(host="0.0.0.0", port=port)
+
 
 # ====================================
 # TELEGRAM + GEMINI
@@ -81,3 +84,4 @@ while True:
     except:
 
         time.sleep(5)
+
