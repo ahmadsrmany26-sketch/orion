@@ -1,84 +1,85 @@
-import time
-import threading
-from flask import Flask
+# -*- coding: utf-8 -*-
+
 import telebot
 import google.generativeai as genai
+import threading
+import os
+from flask import Flask
 
-# ====================================
-# WEB SERVER (required for Render)
-# ====================================
-
-app = Flask(__name__)
-
-@app.route('/')
-def home():
-    return "Orion is running"
-
-def run_web():
-    import os
-port = int(os.environ.get("PORT", 10000))
-app.run(host="0.0.0.0", port=port)
-
-
-# ====================================
-# TELEGRAM + GEMINI
-# ====================================
+# =========================
+# TOKENS
+# =========================
 
 BOT_TOKEN = "8356879608:AAGNoug55rbkBdEbpYNqxvwbRJEjgTUbyYo"
 GOOGLE_API_KEY = "AIzaSyA_6xCgYS9XoY_ItyxfUMfyTpZLBofExVA"
 
+# =========================
+# GEMINI
+# =========================
+
 genai.configure(api_key=GOOGLE_API_KEY)
 
-model = genai.GenerativeModel("gemini-2.5-flash")
+model = genai.GenerativeModel("gemini-1.5-flash")
+
+# =========================
+# TELEGRAM BOT
+# =========================
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
-bot.remove_webhook()
+SYSTEM_PROMPT = """
+أنت أوريون، خبير عالمي في الأنيميشن 3D وسرد القصص بأسلوب بيكسار.
+تتحدث دائماً باللهجة السورية.
+"""
 
-SYSTEM = "أنت أوريون، خبير أنيميشن ثلاثي الأبعاد بأسلوب Pixar."
-
-def think(user):
+def generate_reply(text):
 
     try:
 
-        response = model.generate_content(SYSTEM + user)
+        prompt = SYSTEM_PROMPT + "\nالمستخدم: " + text + "\nأوريون:"
+
+        response = model.generate_content(prompt)
 
         return response.text
 
-    except:
+    except Exception as e:
 
-        return "صار في خطأ مؤقت"
+        print(e)
 
-def send(chat,text):
-
-    for i in range(0,len(text),4000):
-
-        bot.send_message(chat,text[i:i+4000])
+        return "صار خطأ."
 
 @bot.message_handler(commands=['start'])
+
 def start(msg):
 
-    send(msg.chat.id,"Orion Render 24/7 Active")
+    bot.reply_to(msg, "أهلاً أنا أوريون")
 
 @bot.message_handler(func=lambda m: True)
+
 def handle(msg):
 
-    reply = think(msg.text)
+    reply = generate_reply(msg.text)
 
-    send(msg.chat.id,reply)
+    bot.reply_to(msg, reply)
 
-# ====================================
-# START EVERYTHING
-# ====================================
+# =========================
+# FLASK
+# =========================
 
-import os
+app = Flask(__name__)
 
-if __name__ == "__main__":
+@app.route('/')
 
-    port = int(os.environ.get("PORT", 10000))
+def home():
 
-    threading.Thread(target=lambda: bot.infinity_polling()).start()
+    return "Orion is alive"
 
-    app.run(host="0.0.0.0", port=port)
+# =========================
+# START BOT
+# =========================
 
+def run_bot():
 
+    bot.infinity_polling()
+
+threading.Thread(target=run_bot).start()
